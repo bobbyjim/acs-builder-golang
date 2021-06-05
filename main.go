@@ -129,7 +129,7 @@ func handleRequests() {
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
-	myRouter.HandleFunc("/sensor/{type}", createSensor).Methods("POST")
+	myRouter.HandleFunc("/sensors/{type}", createSensor).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":1317", myRouter))
 }
