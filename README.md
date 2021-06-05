@@ -9,7 +9,7 @@ Incrementally developed.
 
 # API
 
-## POST /sensor/{type}
+## POST /sensors/{type}
 
 Create a sensor. Type is a single capital letter from: 
 
