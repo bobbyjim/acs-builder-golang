@@ -15,8 +15,8 @@ Create a Neutrino Sensor at TL10 and MCr1.0.
 
 Request Body:
 
-mount (optional): enum (T1 | T2 | T3 | T4 | B1 | B2)
-range (optional): enum (Vd | Or | Fo)
+- mount (optional): enum (T1 | T2 | T3 | T4 | B1 | B2)
+- range (optional): enum (Vd | Or | Fo)
 
 # Notes
 
