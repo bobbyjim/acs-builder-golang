@@ -18,9 +18,9 @@ Request Body:
 - mount (optional): enum (T1 | T2 | T3 | T4 | B1 | B2)
 - range (optional): enum (Vd | Or | Fo)
 
-# Notes
+# To Do
 
-The methods are not decoupled.  Yet.
-The maps are not complete.  Yet.
-The maps are not externalized.  Yet.
+- The methods are not decoupled.  Yet.
+- The maps are not complete.  Yet.
+- The maps are not externalized.  Yet.
 
