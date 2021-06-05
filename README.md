@@ -9,18 +9,36 @@ Incrementally developed.
 
 # API
 
-## POST /sensor/N
+## POST /sensor/{type}
 
-Create a Neutrino Sensor at TL10 and MCr1.0.
+Create a sensor. Type is a single capital letter from: 
+
+- C: Communicator
+- H: HoloVisor
+- T: Scope
+- V: Visor
+- W: CommPlus
+- E: EMS
+- G: Grav
+- N: Neutrino
+- R: Radar
+- S: Scanner
+- A: Activity
 
 Request Body:
 
 - mount (optional): enum (T1 | T2 | T3 | T4 | B1 | B2)
-- range (optional): enum (Vd | Or | Fo)
+- range (optional): enum (Vl | D | Vd | Or | Fo | G | BR | FR | SR | AR | LR | DS)
 
 # To Do
 
-- The methods are not decoupled.  Yet.
-- The maps are not complete.  Yet.
-- The maps are not externalized.  Yet.
+- Swagger doc.
+- Decouple methods.
+- Fill out maps.
+- Externalize maps.
+- Weapons.
+- Defenses.
+- Hull.
+- Drives.
+- Etc.
 
