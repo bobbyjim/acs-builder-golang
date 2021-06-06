@@ -9,6 +9,10 @@ Incrementally developed.
 
 # API
 
+## GET /sensors/all
+
+Returns a list of all sensors with basic data.
+
 ## POST /sensors/{type}
 
 Create a sensor. Type is a single capital letter from: 
