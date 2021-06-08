@@ -60,46 +60,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: homePage")
 }
 
-func createNewMount(w http.ResponseWriter, r *http.Request) {
-   // get the body of our POST request
-   // unmarshal this into a new Article struct
-   // append this to our array.    
-   reqBody, _ := ioutil.ReadAll(r.Body)
-   var mount Mount 
-   json.Unmarshal(reqBody, &mount)
-   // update our map
-   MountMap[ mount.Type ] = mount;
-
-   json.NewEncoder(w).Encode(mount)
-}
-
-func createNewSensor(w http.ResponseWriter, r *http.Request) {
-   // get the body of our POST request
-   // unmarshal this into a new Article struct
-   // append this to our array.    
-   reqBody, _ := ioutil.ReadAll(r.Body)
-   var sensor Sensor 
-   json.Unmarshal(reqBody, &sensor)
-   // update our map
-   SensorMap[ sensor.Type ] = sensor;
-
-   json.NewEncoder(w).Encode(sensor)
-}
-
-func createNewWeapon(w http.ResponseWriter, r *http.Request) {
-   // get the body of our POST request
-   // unmarshal this into a new Article struct
-   // append this to our array.    
-   reqBody, _ := ioutil.ReadAll(r.Body)
-   var weapon Sensor 
-   json.Unmarshal(reqBody, &weapon)
-   // update our map
-   WeaponMap[ weapon.Type ] = weapon;
-
-   json.NewEncoder(w).Encode(weapon)
-}
-
-
 /*
 func createNewArticle(w http.ResponseWriter, r *http.Request) {
    // get the body of our POST request
@@ -127,6 +87,99 @@ func createComponent(typ string) Component {
    return component
 }
 
+///////////////////////////////////////////////////////////////////////
+//
+// RANGE MANAGEMENT
+//
+///////////////////////////////////////////////////////////////////////
+func getAllRanges(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(RangeMap)
+}
+
+func createNewRange(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var acsRange Range 
+   json.Unmarshal(reqBody, &acsRange)
+   // update our map
+   RangeMap[ acsRange.Type ] = acsRange;
+
+   json.NewEncoder(w).Encode(acsRange)
+}
+
+///////////////////////////////////////////////////////////////////////
+//
+// MOUNT MANAGEMENT
+//
+///////////////////////////////////////////////////////////////////////
+func getAllMounts(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(MountMap)
+}
+
+func createNewMount(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var mount Mount 
+   json.Unmarshal(reqBody, &mount)
+   // update our map
+   MountMap[ mount.Type ] = mount;
+
+   json.NewEncoder(w).Encode(mount)
+}
+
+///////////////////////////////////////////////////////////////////////
+//
+// SENSOR MANAGEMENT
+//
+///////////////////////////////////////////////////////////////////////
+func getAllSensors(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(SensorMap)
+}
+
+func createNewSensor(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var sensor Sensor 
+   json.Unmarshal(reqBody, &sensor)
+   // update our map
+   SensorMap[ sensor.Type ] = sensor;
+
+   json.NewEncoder(w).Encode(sensor)
+}
+
+///////////////////////////////////////////////////////////////////////
+//
+// WEAPON MANAGEMENT
+//
+///////////////////////////////////////////////////////////////////////
+func getAllWeapons(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(WeaponMap)
+}
+
+func createNewWeapon(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var weapon Sensor 
+   json.Unmarshal(reqBody, &weapon)
+   // update our map
+   WeaponMap[ weapon.Type ] = weapon;
+
+   json.NewEncoder(w).Encode(weapon)
+}
+
+///////////////////////////////////////////////////////////////////////
+//
+//  BUILDERS
+// 
+///////////////////////////////////////////////////////////////////////
 func buildMount(mnt string, rng string) Mount {
    //
    //  Figure out the Mount
@@ -153,7 +206,7 @@ func buildMount(mnt string, rng string) Mount {
    return mount_object
 }
 
-func createSensor(w http.ResponseWriter, r *http.Request) {
+func buildSensor(w http.ResponseWriter, r *http.Request) {
    vars := mux.Vars(r)
    typ := vars["type"]
    
@@ -199,16 +252,50 @@ func createSensor(w http.ResponseWriter, r *http.Request) {
    json.NewEncoder(w).Encode(component)
 }
 
-func getAllMounts(w http.ResponseWriter, r *http.Request) {
-   json.NewEncoder(w).Encode(MountMap)
-}
+func buildWeapon(w http.ResponseWriter, r *http.Request) {
+   vars := mux.Vars(r)
+   typ := vars["type"]
+   
+   reqBody, _ := ioutil.ReadAll(r.Body)
 
-func getAllSensors(w http.ResponseWriter, r *http.Request) {
-   json.NewEncoder(w).Encode(SensorMap)
-}
+   component := createComponent(typ)
 
-func getAllWeapons(w http.ResponseWriter, r *http.Request) {
-   json.NewEncoder(w).Encode(WeaponMap)
+   //
+   //   Figure out the type
+   //
+   var weapon_object Sensor
+   var ncheck bool
+
+   weapon_object, ncheck = WeaponMap[typ]
+   if ncheck {
+      component.MCr = weapon_object.MCr
+	   component.TL  = weapon_object.TL
+	   component.Name = weapon_object.Name
+	}
+
+   //
+   //   Is this the right place to do this?
+   //
+   json.Unmarshal(reqBody, &component)
+
+   //
+   //  Figure out the Mount and Range
+   //
+   if component.Mount == "" {
+      component.Mount = "T1"    // TODO
+   }
+   mount_object := buildMount(component.Mount, component.Range)
+   range_object := RangeMap[component.Range] // still need the TL Mod
+
+   // 
+   //  Now put the component together
+   //
+   component.Tons = mount_object.Tons 
+   component.MCr  += float32(mount_object.MCr)
+   component.TL   += uint8(range_object.TLMod)
+   component.Label = component.Range + " " + mount_object.Type + " " + component.Name + "-" + strconv.Itoa(int(component.TL))
+
+   json.NewEncoder(w).Encode(component)
 }
 
 func handleRequests() {
@@ -219,15 +306,19 @@ func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
 
+   myRouter.HandleFunc("/ranges",  getAllRanges).Methods("GET")
+   myRouter.HandleFunc("/ranges",  createNewRange).Methods("POST")
+
    myRouter.HandleFunc("/mounts",  getAllMounts).Methods("GET")
    myRouter.HandleFunc("/mounts",  createNewMount).Methods("POST")
 
    myRouter.HandleFunc("/sensors", getAllSensors).Methods("GET")
    myRouter.HandleFunc("/sensors",  createNewSensor).Methods("POST")
-	myRouter.HandleFunc("/sensors/{type}", createSensor).Methods("POST")
+	myRouter.HandleFunc("/sensors/{type}", buildSensor).Methods("POST")
 
    myRouter.HandleFunc("/weapons", getAllWeapons).Methods("GET")
    myRouter.HandleFunc("/weapons", createNewWeapon).Methods("POST")
+   myRouter.HandleFunc("/weapons/{type}", buildWeapon).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":1317", myRouter))
 }
