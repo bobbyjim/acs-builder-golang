@@ -45,6 +45,19 @@ type Sensor struct {
    MountClass    string   `json:"mountClass"`
 }
 
+type Drive struct {
+   Type string          `json:"type"`
+   Name string          `json:"name"`
+   Label string         `json:"label"`
+   Rating float32       `json:"rating"`      // doubles as hull percentage per rating in the database
+   Tons uint16          `json:"tons"`        // doubles as tons overhead in the database
+   MCr  uint16          `json:"mcr"`
+   TargetHullVolume  uint16   `json:"targetHullVolume"`
+   TonsMinimum uint8    `json:"tonsMinimum"`
+   MCrPerTon float32    `json:"mcrPerTon"`
+   Fuel int             `json:"fuel"`
+}
+
 //
 //  global Articles array
 //  the poor man's database
@@ -54,6 +67,7 @@ var RangeMap map[string]Range
 var SensorMap map[string]Sensor
 var WeaponMap map[string]Sensor  // for now at least
 var RangeClass map[string]map[string]Range
+var DriveMap   map[string]Drive
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the Homepage!")
@@ -206,97 +220,80 @@ func buildMount(mnt string, rng string) Mount {
    return mount_object
 }
 
+func buildComponent(
+      w http.ResponseWriter, 
+      r *http.Request, 
+      sensor_object Sensor,
+      ncheck bool,
+      ) {
+
+      reqBody, _ := ioutil.ReadAll(r.Body)
+
+      component := createComponent(sensor_object.Type)
+      if ncheck {
+            component.MCr = sensor_object.MCr
+            component.TL  = sensor_object.TL
+            component.Name = sensor_object.Name
+            component.Mount = sensor_object.MountClass
+      }
+      json.Unmarshal(reqBody, &component)
+      
+      //
+      //  Figure out the Mount and Range
+      //
+      mount_object := buildMount(component.Mount, component.Range)
+      range_object := RangeMap[component.Range] // still need the TL Mod
+      
+      // 
+      //  Now put the component together
+      //
+      component.Tons = mount_object.Tons 
+      component.MCr  += float32(mount_object.MCr)
+      component.TL   += uint8(range_object.TLMod)
+      component.Label = component.Range + " " + mount_object.Type + " " + component.Name + "-" + strconv.Itoa(int(component.TL))
+      
+      json.NewEncoder(w).Encode(component)
+}
+
 func buildSensor(w http.ResponseWriter, r *http.Request) {
    vars := mux.Vars(r)
    typ := vars["type"]
-   
-   reqBody, _ := ioutil.ReadAll(r.Body)
-
-   component := createComponent(typ)
-
-   //
-   //   Figure out the sensor type
-   //
-   var sensor_object Sensor
-   var ncheck bool
-
-   sensor_object, ncheck = SensorMap[typ]
-   if ncheck {
-      component.MCr = sensor_object.MCr
-	   component.TL  = sensor_object.TL
-	   component.Name = sensor_object.Name
-	}
-
-   //
-   //   Is this the right place to do this?
-   //
-   json.Unmarshal(reqBody, &component)
-
-   //
-   //  Figure out the Mount and Range
-   //
-   if component.Mount == "" {
-      component.Mount = "Surf"
-   }
-   mount_object := buildMount(component.Mount, component.Range)
-   range_object := RangeMap[component.Range] // still need the TL Mod
-
-   // 
-   //  Now put the component together
-   //
-   component.Tons = mount_object.Tons 
-   component.MCr  += float32(mount_object.MCr)
-   component.TL   += uint8(range_object.TLMod)
-   component.Label = component.Range + " " + mount_object.Type + " " + component.Name + "-" + strconv.Itoa(int(component.TL))
-
-   json.NewEncoder(w).Encode(component)
+   sensor_object, ncheck := SensorMap[typ]
+   buildComponent(w, r, sensor_object, ncheck)
 }
 
 func buildWeapon(w http.ResponseWriter, r *http.Request) {
    vars := mux.Vars(r)
    typ := vars["type"]
-   
-   reqBody, _ := ioutil.ReadAll(r.Body)
-
-   component := createComponent(typ)
-
-   //
-   //   Figure out the type
-   //
-   var weapon_object Sensor
-   var ncheck bool
-
-   weapon_object, ncheck = WeaponMap[typ]
-   if ncheck {
-      component.MCr = weapon_object.MCr
-	   component.TL  = weapon_object.TL
-	   component.Name = weapon_object.Name
-	}
-
-   //
-   //   Is this the right place to do this?
-   //
-   json.Unmarshal(reqBody, &component)
-
-   //
-   //  Figure out the Mount and Range
-   //
-   if component.Mount == "" {
-      component.Mount = "T1"    // TODO
-   }
-   mount_object := buildMount(component.Mount, component.Range)
-   range_object := RangeMap[component.Range] // still need the TL Mod
-
-   // 
-   //  Now put the component together
-   //
-   component.Tons = mount_object.Tons 
-   component.MCr  += float32(mount_object.MCr)
-   component.TL   += uint8(range_object.TLMod)
-   component.Label = component.Range + " " + mount_object.Type + " " + component.Name + "-" + strconv.Itoa(int(component.TL))
-
-   json.NewEncoder(w).Encode(component)
+   weapon_object, ncheck := WeaponMap[typ]
+   buildComponent(w, r, weapon_object, ncheck)
 }
+
+func buildDrive(w http.ResponseWriter, r *http.Request) {
+   vars := mux.Vars(r)
+   typ := vars["type"]
+
+   drive_object /*, ncheck*/ := DriveMap[typ]
+   percentagePerRating := drive_object.Rating
+   tonsOverhead := drive_object.Tons
+
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   json.Unmarshal(reqBody, &drive_object)
+
+   drive_object.Tons   = uint16(float32(drive_object.Rating) * percentagePerRating * float32(drive_object.TargetHullVolume / 100)) + tonsOverhead
+
+   if drive_object.Tons < uint16(drive_object.TonsMinimum) {
+      drive_object.Tons = uint16(drive_object.TonsMinimum)
+      drive_object.Rating = (float32(drive_object.Tons) - float32(tonsOverhead)) * 100 / float32(drive_object.TargetHullVolume) / percentagePerRating
+   }
+
+   drive_object.MCr    = uint16(float32(drive_object.Tons) * drive_object.MCrPerTon)
+   drive_object.Label  = drive_object.Name + "-" + strconv.Itoa(int(drive_object.Rating))
+   drive_object.Fuel = drive_object.Fuel * int(drive_object.Rating) * int(drive_object.TargetHullVolume) / 100
+   
+   json.NewEncoder(w).Encode(drive_object)
+}
+
 
 func handleRequests() {
 
@@ -319,6 +316,9 @@ func handleRequests() {
    myRouter.HandleFunc("/weapons", getAllWeapons).Methods("GET")
    myRouter.HandleFunc("/weapons", createNewWeapon).Methods("POST")
    myRouter.HandleFunc("/weapons/{type}", buildWeapon).Methods("POST")
+
+   myRouter.HandleFunc("/drives/{type}", buildDrive).Methods("POST")
+  // myRouter.HandleFunc("/hulls/{type}", buildHull).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":1317", myRouter))
 }
@@ -394,11 +394,17 @@ func main() {
 	}
 
    WeaponMap = map[string]Sensor {
-      "K": {Type:"K", Name:"Pulse Laser",       RangeClass:"R",  TL:9,  MCr: 0.3, MountClass: "Turret"},
-      "L": {Type:"L", Name:"Beam Laser",        RangeClass:"R",  TL:10, MCr: 0.5, MountClass: "Turret"},
+      "K": {Type:"K", Name:"Pulse Laser",       RangeClass:"R",  TL:9,  MCr: 0.3, MountClass: "T1"},
+      "L": {Type:"L", Name:"Beam Laser",        RangeClass:"R",  TL:10, MCr: 0.5, MountClass: "T1"},
 
-      "A": {Type:"A", Name:"Particle Accelerator", RangeClass:"S", TL:11, MCr: 2.5, MountClass: "Barbette"},
-      "M": {Type:"M", Name:"Meson Gun",            RangeClass:"S", TL:13, MCr: 5.0, MountClass: "Main"},
+      "A": {Type:"A", Name:"Particle Accelerator", RangeClass:"S", TL:11, MCr: 2.5, MountClass: "B1"},
+      "M": {Type:"M", Name:"Meson Gun",            RangeClass:"S", TL:13, MCr: 5.0, MountClass: "M"},
+   }
+
+   DriveMap = map[string]Drive {
+      "M": {Type:"M", Name:"Maneuver",   Rating: 2.0, Tons: 0, TonsMinimum: 2,  MCrPerTon: 2.0, Fuel: 0},
+      "J": {Type:"J", Name:"Jump",       Rating: 2.5, Tons: 5, TonsMinimum: 10, MCrPerTon: 1.0, Fuel: 10},
+      "P": {Type:"P", Name:"Powerplant", Rating: 1.5, Tons: 1, TonsMinimum: 4,  MCrPerTon: 1.0, Fuel: 1},
    }
 
 	handleRequests()
