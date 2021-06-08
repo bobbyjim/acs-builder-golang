@@ -52,7 +52,7 @@ type Drive struct {
    Rating float32       `json:"rating"`      // doubles as hull percentage per rating in the database
    Tons uint16          `json:"tons"`        // doubles as tons overhead in the database
    MCr  uint16          `json:"mcr"`
-   TargetHullVolume  uint16   `json:"targetHullVolume"`
+   TargetHullTons  uint16   `json:"targetHullTons"`
    TonsMinimum uint8    `json:"tonsMinimum"`
    MCrPerTon float32    `json:"mcrPerTon"`
    Fuel int             `json:"fuel"`
@@ -280,16 +280,16 @@ func buildDrive(w http.ResponseWriter, r *http.Request) {
    reqBody, _ := ioutil.ReadAll(r.Body)
    json.Unmarshal(reqBody, &drive_object)
 
-   drive_object.Tons   = uint16(float32(drive_object.Rating) * percentagePerRating * float32(drive_object.TargetHullVolume / 100)) + tonsOverhead
+   drive_object.Tons   = uint16(float32(drive_object.Rating) * percentagePerRating * float32(drive_object.TargetHullTons / 100)) + tonsOverhead
 
    if drive_object.Tons < uint16(drive_object.TonsMinimum) {
       drive_object.Tons = uint16(drive_object.TonsMinimum)
-      drive_object.Rating = (float32(drive_object.Tons) - float32(tonsOverhead)) * 100 / float32(drive_object.TargetHullVolume) / percentagePerRating
+      drive_object.Rating = (float32(drive_object.Tons) - float32(tonsOverhead)) * 100 / float32(drive_object.TargetHullTons) / percentagePerRating
    }
 
    drive_object.MCr    = uint16(float32(drive_object.Tons) * drive_object.MCrPerTon)
    drive_object.Label  = drive_object.Name + "-" + strconv.Itoa(int(drive_object.Rating))
-   drive_object.Fuel = drive_object.Fuel * int(drive_object.Rating) * int(drive_object.TargetHullVolume) / 100
+   drive_object.Fuel = drive_object.Fuel * int(drive_object.Rating) * int(drive_object.TargetHullTons) / 100
    
    json.NewEncoder(w).Encode(drive_object)
 }
