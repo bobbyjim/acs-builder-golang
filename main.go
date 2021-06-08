@@ -14,6 +14,7 @@ type Mount struct {
 	Type string  `json:"type"`
 	Tons uint16   `json:"tons"`
 	MCr  float32 `json:"mcr"`
+   Class string `json:"class"`
 }
 
 type Range struct {
@@ -40,7 +41,8 @@ type Sensor struct {
 	Name	string   `json:"name"`
 	TL  	uint8	   `json:"tl"`
 	MCr	float32	`json:"mcr"`
-   RangeClass string   `json:"class"`
+   RangeClass string   `json:"rangeClass"`
+   MountClass    string   `json:"mountClass"`
 }
 
 //
@@ -50,12 +52,53 @@ type Sensor struct {
 var MountMap map[string]Mount
 var RangeMap map[string]Range
 var SensorMap map[string]Sensor
+var WeaponMap map[string]Sensor  // for now at least
 var RangeClass map[string]map[string]Range
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the Homepage!")
 	fmt.Println("Endpoint hit: homePage")
 }
+
+func createNewMount(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var mount Mount 
+   json.Unmarshal(reqBody, &mount)
+   // update our map
+   MountMap[ mount.Type ] = mount;
+
+   json.NewEncoder(w).Encode(mount)
+}
+
+func createNewSensor(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var sensor Sensor 
+   json.Unmarshal(reqBody, &sensor)
+   // update our map
+   SensorMap[ sensor.Type ] = sensor;
+
+   json.NewEncoder(w).Encode(sensor)
+}
+
+func createNewWeapon(w http.ResponseWriter, r *http.Request) {
+   // get the body of our POST request
+   // unmarshal this into a new Article struct
+   // append this to our array.    
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   var weapon Sensor 
+   json.Unmarshal(reqBody, &weapon)
+   // update our map
+   WeaponMap[ weapon.Type ] = weapon;
+
+   json.NewEncoder(w).Encode(weapon)
+}
+
 
 /*
 func createNewArticle(w http.ResponseWriter, r *http.Request) {
@@ -156,8 +199,16 @@ func createSensor(w http.ResponseWriter, r *http.Request) {
    json.NewEncoder(w).Encode(component)
 }
 
+func getAllMounts(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(MountMap)
+}
+
 func getAllSensors(w http.ResponseWriter, r *http.Request) {
    json.NewEncoder(w).Encode(SensorMap)
+}
+
+func getAllWeapons(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(WeaponMap)
 }
 
 func handleRequests() {
@@ -167,8 +218,16 @@ func handleRequests() {
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
-   myRouter.HandleFunc("/sensors/all", getAllSensors).Methods("GET")
+
+   myRouter.HandleFunc("/mounts",  getAllMounts).Methods("GET")
+   myRouter.HandleFunc("/mounts",  createNewMount).Methods("POST")
+
+   myRouter.HandleFunc("/sensors", getAllSensors).Methods("GET")
+   myRouter.HandleFunc("/sensors",  createNewSensor).Methods("POST")
 	myRouter.HandleFunc("/sensors/{type}", createSensor).Methods("POST")
+
+   myRouter.HandleFunc("/weapons", getAllWeapons).Methods("GET")
+   myRouter.HandleFunc("/weapons", createNewWeapon).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":1317", myRouter))
 }
@@ -190,8 +249,9 @@ func main() {
 		"B2": {Type:"B2",	Tons:6,		MCr:7},
 	}
    
+   /*
    RangeClass = map[string] map[string] Range {
-      "W": {
+      "R": {
 		"Vl": {Type:"Vl",   TLMod:-2,   CostMod:0.33,   TonsMod:0.33},
 		"D" : {Type:"D",    TLMod:-1,   CostMod:0.5,    TonsMod:0.5},
 		"Vd": {Type:"Vd",	  TLMod:0,	  CostMod:1.0,	   TonsMod:1.0},
@@ -208,6 +268,7 @@ func main() {
 		"DS": {Type:"DS",   TLMod:2,    CostMod:5.0,    TonsMod:3.0},
       },
    }
+   */
 
    RangeMap = map[string]Range {
 		"BR": {Type:"BR",   TLMod:-3,   CostMod:0.25,   TonsMod:0.25},
@@ -226,20 +287,28 @@ func main() {
  	}
 
 	SensorMap = map[string]Sensor {
-		"C": {Type:"C", Name:"Communicator", 		RangeClass:"S",  TL:8,  MCr: 1.0},
-		"H": {Type:"H", Name:"HoloVisor",    		RangeClass:"S",  TL:18, MCr: 1.0},
-		"T": {Type:"T", Name:"Scope",        		RangeClass:"S",  TL:9,  MCr: 1.0},
-		"V": {Type:"V", Name:"Visor",        		RangeClass:"S",  TL:14, MCr: 1.0},
-		"W": {Type:"W", Name:"CommPlus",     		RangeClass:"S",  TL:15, MCr: 1.0},
+		"C": {Type:"C", Name:"Communicator", 		RangeClass:"S",  TL:8,  MCr: 1.0, MountClass: "Surf"},
+		"H": {Type:"H", Name:"HoloVisor",    		RangeClass:"S",  TL:18, MCr: 1.0, MountClass: "Surf"},
+		"T": {Type:"T", Name:"Scope",        		RangeClass:"S",  TL:9,  MCr: 1.0, MountClass: "Surf"},
+		"V": {Type:"V", Name:"Visor",        		RangeClass:"S",  TL:14, MCr: 1.0, MountClass: "Surf"},
+		"W": {Type:"W", Name:"CommPlus",     		RangeClass:"S",  TL:15, MCr: 1.0, MountClass: "Surf"},
 
-		"E": {Type:"E", Name:"EMS",				 	RangeClass:"S",  TL:12, MCr: 1.0},
-		"G": {Type:"G", Name:"Grav Sensor",			RangeClass:"S",  TL:13, MCr: 1.0},
-		"N": {Type:"N", Name:"Neutrino Detector", RangeClass:"S",  TL:10, MCr: 1.0},
-		"R": {Type:"R", Name:"Radar",				   RangeClass:"S",  TL:9,  MCr: 1.0},
-		"S": {Type:"S", Name:"Scanner",				RangeClass:"S",  TL:19, MCr: 1.0},
+		"E": {Type:"E", Name:"EMS",				 	RangeClass:"S",  TL:12, MCr: 1.0, MountClass: "Surf"},
+		"G": {Type:"G", Name:"Grav Sensor",			RangeClass:"S",  TL:13, MCr: 1.0, MountClass: "Surf"},
+		"N": {Type:"N", Name:"Neutrino Detector", RangeClass:"S",  TL:10, MCr: 1.0, MountClass: "Surf"},
+		"R": {Type:"R", Name:"Radar",				   RangeClass:"S",  TL:9,  MCr: 1.0, MountClass: "Surf"},
+		"S": {Type:"S", Name:"Scanner",				RangeClass:"S",  TL:19, MCr: 1.0, MountClass: "Surf"},
 
-		"A": {Type:"A", Name:"Activity Sensor",	RangeClass:"W",  TL:11, MCr: 0.1},
+		"A": {Type:"A", Name:"Activity Sensor",	RangeClass:"R",  TL:11, MCr: 0.1, MountClass: "Surf"},
 	}
+
+   WeaponMap = map[string]Sensor {
+      "K": {Type:"K", Name:"Pulse Laser",       RangeClass:"R",  TL:9,  MCr: 0.3, MountClass: "Turret"},
+      "L": {Type:"L", Name:"Beam Laser",        RangeClass:"R",  TL:10, MCr: 0.5, MountClass: "Turret"},
+
+      "A": {Type:"A", Name:"Particle Accelerator", RangeClass:"S", TL:11, MCr: 2.5, MountClass: "Barbette"},
+      "M": {Type:"M", Name:"Meson Gun",            RangeClass:"S", TL:13, MCr: 5.0, MountClass: "Main"},
+   }
 
 	handleRequests()
 }
