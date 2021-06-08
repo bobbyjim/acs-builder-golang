@@ -55,7 +55,7 @@ type Drive struct {
    TargetHullTons  uint16   `json:"targetHullTons"`
    TonsMinimum uint8    `json:"tonsMinimum"`
    MCrPerTon float32    `json:"mcrPerTon"`
-   Fuel int             `json:"fuel"`
+   Fuel int             `json:"fuel"`        // doubles as fuel percentage of hull per rating
 }
 
 //
@@ -276,6 +276,7 @@ func buildDrive(w http.ResponseWriter, r *http.Request) {
    drive_object /*, ncheck*/ := DriveMap[typ]
    percentagePerRating := drive_object.Rating
    tonsOverhead := drive_object.Tons
+   fuelPercentagePerRating := drive_object.Fuel
 
    reqBody, _ := ioutil.ReadAll(r.Body)
    json.Unmarshal(reqBody, &drive_object)
@@ -289,7 +290,7 @@ func buildDrive(w http.ResponseWriter, r *http.Request) {
 
    drive_object.MCr    = uint16(float32(drive_object.Tons) * drive_object.MCrPerTon)
    drive_object.Label  = drive_object.Name + "-" + strconv.Itoa(int(drive_object.Rating))
-   drive_object.Fuel = drive_object.Fuel * int(drive_object.Rating) * int(drive_object.TargetHullTons) / 100
+   drive_object.Fuel   = fuelPercentagePerRating * int(drive_object.Rating) * int(drive_object.TargetHullTons) / 100
    
    json.NewEncoder(w).Encode(drive_object)
 }
