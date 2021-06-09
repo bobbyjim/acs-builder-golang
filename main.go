@@ -58,6 +58,16 @@ type Drive struct {
    Fuel int             `json:"fuel"`        // doubles as fuel percentage of hull per rating
 }
 
+type Hull struct {
+   Config string        `json:"config"`
+   Name   string        `json:"name"`
+   TL     uint8         `json:"tl"`
+   Tons   uint16        `json:"tons"`
+   MCr    float32       `json:"mcr"`            // doubles as mcr overhead
+   MCrPer100Tons uint16  `json:"mcrPer100Tons"`
+// TODO: other stuff
+}
+
 //
 //  global Articles array
 //  the poor man's database
@@ -68,6 +78,7 @@ var SensorMap map[string]Sensor
 var WeaponMap map[string]Sensor  // for now at least
 var RangeClass map[string]map[string]Range
 var DriveMap   map[string]Drive
+var HullMap    map[string]Hull
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the Homepage!")
@@ -269,6 +280,10 @@ func buildWeapon(w http.ResponseWriter, r *http.Request) {
    buildComponent(w, r, weapon_object, ncheck)
 }
 
+func getAllDrives(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(DriveMap)
+}
+
 func buildDrive(w http.ResponseWriter, r *http.Request) {
    vars := mux.Vars(r)
    typ := vars["type"]
@@ -295,6 +310,32 @@ func buildDrive(w http.ResponseWriter, r *http.Request) {
    json.NewEncoder(w).Encode(drive_object)
 }
 
+      /*
+      Config string        `json:"config"`
+      Name   string        `json:"name"`
+      TL     uint8         `json:"tl"`
+      Tons   uint16        `json:"tons"`
+      MCr    float32       `json:"mcr"`            // doubles as mcr overhead
+      MCrPer100Tons uint16  `json:"mcrPer100Tons"`
+      */
+
+func getAllHulls(w http.ResponseWriter, r *http.Request) {
+   json.NewEncoder(w).Encode(HullMap)
+}
+
+func buildHull(w http.ResponseWriter, r *http.Request) {
+   vars := mux.Vars(r)
+   cfg := vars["config"]
+   hull_object := HullMap[cfg]
+   reqBody, _ := ioutil.ReadAll(r.Body)
+   json.Unmarshal(reqBody, &hull_object)
+
+   hull_object.Config = cfg
+   hull_object.MCr = hull_object.MCr + float32(hull_object.MCrPer100Tons) * float32(hull_object.Tons)
+
+   json.NewEncoder(w).Encode(hull_object)
+}
+
 
 func handleRequests() {
 
@@ -318,8 +359,11 @@ func handleRequests() {
    myRouter.HandleFunc("/weapons", createNewWeapon).Methods("POST")
    myRouter.HandleFunc("/weapons/{type}", buildWeapon).Methods("POST")
 
+   myRouter.HandleFunc("/drives", getAllDrives).Methods("GET")
    myRouter.HandleFunc("/drives/{type}", buildDrive).Methods("POST")
-  // myRouter.HandleFunc("/hulls/{type}", buildHull).Methods("POST")
+
+   myRouter.HandleFunc("/hulls", getAllHulls).Methods("GET")
+   myRouter.HandleFunc("/hulls/{config}", buildHull).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":1317", myRouter))
 }
@@ -406,6 +450,16 @@ func main() {
       "M": {Type:"M", Name:"Maneuver",   Rating: 2.0, Tons: 0, TonsMinimum: 2,  MCrPerTon: 2.0, Fuel: 0},
       "J": {Type:"J", Name:"Jump",       Rating: 2.5, Tons: 5, TonsMinimum: 10, MCrPerTon: 1.0, Fuel: 10},
       "P": {Type:"P", Name:"Powerplant", Rating: 1.5, Tons: 1, TonsMinimum: 4,  MCrPerTon: 1.0, Fuel: 1},
+   }
+
+   HullMap = map[string]Hull {
+      "C": {Config:"C", Name:"Closed Structure", TL:0, Tons:0, MCr:0, MCrPer100Tons:2 },
+      "B": {Config:"B", Name:"Braced",           TL:0, Tons:0, MCr:0, MCrPer100Tons:3 },
+      "P": {Config:"P", Name:"Planetoid",        TL:0, Tons:0, MCr:0, MCrPer100Tons:1 },
+      "U": {Config:"U", Name:"Unstreamlined",    TL:0, Tons:0, MCr:2, MCrPer100Tons:3 },
+      "S": {Config:"S", Name:"Streamlined",      TL:0, Tons:0, MCr:2, MCrPer100Tons:6 },
+      "A": {Config:"A", Name:"Airframed",        TL:0, Tons:0, MCr:2, MCrPer100Tons:7 },
+      "L": {Config:"L", Name:"Lifting Body",     TL:0, Tons:0, MCr:4, MCrPer100Tons:12 },
    }
 
 	handleRequests()
