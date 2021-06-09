@@ -331,7 +331,7 @@ func buildHull(w http.ResponseWriter, r *http.Request) {
    json.Unmarshal(reqBody, &hull_object)
 
    hull_object.Config = cfg
-   hull_object.MCr = hull_object.MCr + float32(hull_object.MCrPer100Tons) * float32(hull_object.Tons)
+   hull_object.MCr = hull_object.MCr + float32(hull_object.MCrPer100Tons) * float32(hull_object.Tons) / 100
 
    json.NewEncoder(w).Encode(hull_object)
 }

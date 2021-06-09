@@ -9,13 +9,17 @@ Incrementally developed.
 
 # API
 
-## GET /sensors
+## GET /mounts - Returns a list of all mounts in the database.
+## GET /ranges - Returns a list of all ranges in the database.
+## GET /sensors - Returns a list of all sensor types in the database.
+## GET /weapons - Returns a list of all weapon types in the database.
+## GET /drives - Returns a list of all drive types in the database.
+## GET /hulls - Returns a list of all hull configurations in the database.
 
-Returns a list of all sensors in the database.
-
-## POST /sensors
-
-Add a sensor to the database.
+## POST /mounts - Add a mount to the database.
+## POST /ranges - Add a range to the database.
+## POST /sensors - Add a sensor type to the database.
+## POST /weapons - Add a weapon type to the database.
 
 ## POST /sensors/{type}
 
@@ -26,33 +30,28 @@ Request Body:
 - mount (optional): enum (T1 | T2 | T3 | T4 | B1 | B2)
 - range (optional): enum (Vl | D | Vd | Or | Fo | G | BR | FR | SR | AR | LR | DS)
 
-## GET /weapons
-
-Returns a list of all weapons in the database.
-
-## POST /weapons
-
-Add a weapon to the database.
-
 ## POST /weapons/{type}
-
+ 
 Build a weapon from existing mounts, ranges, and types.  Uses the same request body as the sensor.
 
-## GET /mounts
+## POST /drives/{type}
 
-Returns a list of all mounts in the database.
+Build a drive from existing types.  
 
-## POST /mounts
+Request Body:
 
-Add a mount to the database.
+- rating: numeric drive rating (e.g. 2 for Jump-2 or Maneuver-2)
+- targetHullTons: hull tons (e.g. 200 for a 200t hull; 10000 for a 10 kiloton hull)
 
-## GET /ranges
+## POST /hulls/{config}
 
-Returns a list of all ranges in the database.
+Build a hull with the given configuration.
 
-## POST /ranges
+Request Body:
 
-Add a range to the database.
+- tons: volume of hull, in tons
+- tl: TL of the hull
+
 
 # To Do
 
