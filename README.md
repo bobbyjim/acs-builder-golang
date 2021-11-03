@@ -9,12 +9,12 @@ Incrementally developed.
 
 # API
 
-## GET /mounts - Returns a list of all mounts in the database.
-## GET /ranges - Returns a list of all ranges in the database.
-## GET /sensors - Returns a list of all sensor types in the database.
-## GET /weapons - Returns a list of all weapon types in the database.
-## GET /drives - Returns a list of all drive types in the database.
-## GET /hulls - Returns a list of all hull configurations in the database.
+## GET /mounts - Returns a list of all mounts.
+## GET /ranges - Returns a list of all ranges.
+## GET /sensors - Returns a list of all sensor types.
+## GET /weapons - Returns a list of all weapon types.
+## GET /drives - Returns a list of all drive types.
+## GET /hulls - Returns a list of all hull configurations.
 
 ## POST /mounts - Add a mount to the database.
 ## POST /ranges - Add a range to the database.
