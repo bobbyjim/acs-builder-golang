@@ -7,6 +7,23 @@ A Traveller5 starship component builder.
 Relatively small, stateless endpoints.
 Incrementally developed.
 
+# Example - weapon creation using dynamic picklists
+
+GET /weapons
+GET /mounts
+GET /ranges
+
+(App displays picklists for weapon, mount, and range)
+(User selects weapon Y "Hybrid L-M-S", T3 "triple turret", and Vd "Very distant" range)
+
+POST /weapons/Y
+
+{
+   "mount": "T3",
+   "range": "Vd"
+}
+
+
 # API
 
 ## GET /mounts - Returns a list of all mounts.
