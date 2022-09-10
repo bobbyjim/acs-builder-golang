@@ -1,0 +1,12 @@
+{:set jump}
+   ? "key jump rating (0-9): ";
+   {:get jump rating} get j$ : if j$ < "0" or j$ > "9" goto {:get jump rating}
+return
+
+{:set maneuver}
+   ? "key maneuver rating (0-9): ";
+   {:get maneuver rating} get m$ : if m$ < "0" or m$ > "9" goto {:get maneuver rating}
+return
+
+{:set power}
+return

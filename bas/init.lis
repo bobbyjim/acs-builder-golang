@@ -1,0 +1,20 @@
+;
+;  A blank line for clearing a portion of the screen
+;
+cl$ = "                                        "
+cl$ = cl$ + "                                   "
+
+;
+;  Starting ship
+;
+v% = 200 : rem tons
+z$ = "a" : rem mission
+h$ = "b" : rem size
+g$ = "s" : rem cfg
+m$ = "1" : rem mn 
+j$ = "1" : rem jn
+cr = 0 : rem mcr
+
+
+vload "petfont.bin",8,1,0
+poke $9f36, 128
