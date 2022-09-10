@@ -1,0 +1,370 @@
+;
+;  A blank line for clearing a portion of the screen
+;
+cl$ = "                                        "
+cl$ = cl$ + "                                   "
+
+;
+;  Starting ship
+;
+v% = 200 : rem tons
+z$ = "a" : rem mission
+h$ = "b" : rem size
+g$ = "s" : rem cfg
+m$ = "1" : rem mn 
+j$ = "1" : rem jn
+cr = 0 : rem mcr
+
+
+vload "petfont.bin",8,1,0
+poke $9f36, 128
+
+color 6,0
+cls
+?"     ";
+?"               AAA                  CCCCCCCCCCCCC   SSSSSSSSSSSSSSS 
+?"     ";
+?"              A:::A              CCC::::::::::::C SS:::::::::::::::S
+?"     ";
+?"             A:::::A           CC:::::::::::::::CS:::::SSSSSS::::::S
+?"     ";
+?"            A:::::::A         C:::::CCCCCCCC::::CS:::::S     SSSSSSS
+?"     ";
+?"           A:::::::::A       C:::::C       CCCCCCS:::::S            
+?"     ";
+?"          A:::::A:::::A     C:::::C              S:::::S            
+?"     ";
+?"         A:::::A A:::::A    C:::::C               S::::SSSS         
+?"     ";
+?"        A:::::A   A:::::A   C:::::C                SS::::::SSSSS    
+?"     ";
+?"       A:::::A     A:::::A  C:::::C                  SSS::::::::SS  
+?"     ";
+?"      A:::::AAAAAAAAA:::::A C:::::C                     SSSSSS::::S 
+?"     ";
+?"     A:::::::::::::::::::::AC:::::C                          S:::::S
+?"     ";
+?"    A:::::AAAAAAAAAAAAA:::::AC:::::C       CCCCCC            S:::::S
+?"     ";
+?"   A:::::A             A:::::AC:::::CCCCCCCC::::CSSSSSSS     S:::::S
+?"     ";
+?"  A:::::A               A:::::ACC:::::::::::::::CS::::::SSSSSS:::::S
+?"     ";
+?" A:::::A                 A:::::A CCC::::::::::::CS:::::::::::::::SS 
+?"     ";
+?"AAAAAAA                   AAAAAAA   CCCCCCCCCCCCC SSSSSSSSSSSSSSS   
+?""
+?""
+?"     ";
+?":::::::::  :::   ::: ::::::: :::      :::::::::  :::::::: ::::::::: 
+?"     ";
+?":+:    :+: :+:   :+:   :+:   :+:      :+:    :+: :+:      :+:    :+:
+?"     ";
+?"+:+    +:+ +:+   +:+   +:+   +:+      +:+    +:+ +:+      +:+    +:+
+?"     ";
+?"+#++:++#+  +#+   +:+   +#+   +#+      +#+    +:+ +#+:+#   +#++:++#: 
+?"     ";
+?"+#+    +#+ +#+   +#+   +#+   +#+      +#+    +#+ +#+      +#+    +#+
+?"     ";
+?"#+#    #+# #+#   #+#   #+#   #+#      #+#    #+# #+#      #+#    #+#
+?"     ";
+?"#########   #######  ####### ######## #########  ######## ###    ###
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;  acs-builder
+;
+;  I'm doing it in BASIC because there's something wrong with me.
+;  Now leave me alone so I can do this.
+;
+;  Rob 2022 Sep 7
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+{:main loop}
+
+   color 2
+   ?:for x = 1 to 80 :?chr$(195); :next
+   
+   color 5
+   
+   ?:? spc(32); "menu"
+   ? cl$
+   ? "   a - armor                c - computer             d - defenses
+   ? cl$
+   ? "   f - fuel                 b - fuel bins            i - fuel intakes
+   ? cl$
+   ? "   e - fuel scoops          g - hull config          h - hull volume
+   ? cl$
+   ? "   j - jump                 l - life support         m - maneuver
+   ? cl$
+   ? "   z - mission              p - power                q - qsp
+   ? cl$
+   ? "   s - sensors              t - staterooms           v - vehicles
+   ? cl$
+   ? "   w - weapons
+   ? cl$
+   ?
+   {:main get} get kk$ :if kk$ = "" goto {:main get}
+   locate 30
+   for x = 1 to 27 :?cl$ :next x
+   locate 31
+
+   if kk$ = "a" then gosub {:set armor}
+   if kk$ = "c" then gosub {:set computer}
+   if kk$ = "d" then gosub {:set defenses}
+   if kk$ = "f" then gosub {:set fuel}
+   if kk$ = "b" then gosub {:set bins}
+   if kk$ = "i" then gosub {:set intakes}
+   if kk$ = "e" then gosub {:set scoops}
+   if kk$ = "g" then gosub {:set hull config}
+   if kk$ = "h" then gosub {:set volume}
+   if kk$ = "j" then gosub {:set jump}
+   if kk$ = "l" then gosub {:set life support}
+   if kk$ = "m" then gosub {:set maneuver}
+   if kk$ = "z" then gosub {:set mission}
+   if kk$ = "p" then gosub {:set power}
+   if kk$ = "q" then gosub {:set qsp}
+   if kk$ = "s" then gosub {:set sensors}
+   if kk$ = "t" then gosub {:set staterooms}
+   if kk$ = "v" then gosub {:set vehicles}
+   if kk$ = "w" then gosub {:set weapons}
+
+   gosub {:calculate ship}
+   gosub {:show ship}
+
+goto {:main loop}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;  This is the rollup section. 
+;  Let's do as much work as possible here.  That allows us to update things
+;  independently of calculated rollups.
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+{:calculate ship}
+;
+;  Hull
+;
+hr% = 1
+h1% = 0
+if g$ = "c" then hr% = 2 
+if g$ = "b" then hr% = 3 
+if g$ = "u" then hr% = 3  : h1% = 2
+if g$ = "s" then hr% = 6  : h1% = 2
+if g$ = "a" then hr% = 7  : h1% = 2
+if g$ = "l" then hr% = 12 : h1% = 4
+
+hc% = vn% * hr% + h1%
+
+;
+;  Jump Drive
+;
+jn% = val(j$)
+jv% =  5 + jn% * v%/40
+if jv% < 10 then jv% = 10
+if jn% = 0 then jv% = 0
+jc% = jv%
+
+;
+;  Maneuver Drive
+;
+mn% = val(m$)
+mv% = -1 + mn% * v%/50
+if mv% < 2 then mv% = 2
+if mn% = 0 then mv% = 0
+mc% = mv% * 2
+
+;
+;  Power Plant
+;
+pn% = jn%
+if mn% > pn% then pn% = mn%
+pv% = 1 + pn% * vn% * 3/2 
+if pn% = 0 then pv% = 0
+pc% = pv%
+
+cr = hc% + jc% + mc% + pc%
+
+return
+{:show ship}
+? chr$(19);
+for x = 1 to 27 :?cl$ :next x
+? chr$(19);
+color 8
+? spc(32); "acs builder" 
+?
+? "1   ", z$; "-"; h$; g$; m$; j$; "     mcr: ", cr
+? "2   "
+? "3   computer: model/"; c$;c1$
+? "4   "
+? "5   "
+? "6   "
+? "7   "
+? "8   "
+? "9   "
+? "0   "
+? "1   "
+? "2   "
+? "3   "
+? "4   "
+? "5   "
+? "6   "
+? "7   "
+? "8   "
+? "9   "
+? "0   "
+? "1   "
+? "2   "
+? "3   "
+return
+{:set defenses}
+return
+
+
+{:set sensors}
+return
+
+
+{:set weapons}
+   ? "key in weapon type:"
+   gosub {:show weapons}
+
+   {:get weapon} get w$ :if w$="" goto {:get weapon}
+
+return
+{:set computer}
+   ? "key in computer model [0-9]: "
+   {:get computer} get c$ :if c$<"0" or c$>"9" goto {:get computer}
+   ? "key in bis, fib, or neither? [bfn]: "
+   {:get bis} get c1$ 
+      if c1$="b" then c1$="bis" :return
+      if c1$="f" then c1$="fib" :return
+      if c1$<>"n" goto {:get bis}
+
+   c1$=""
+
+return
+{:set jump}
+   ? "key jump rating (0-9): ";
+   {:get jump rating} get j$ : if j$ < "0" or j$ > "9" goto {:get jump rating}
+return
+
+{:set maneuver}
+   ? "key maneuver rating (0-9): ";
+   {:get maneuver rating} get m$ : if m$ < "0" or m$ > "9" goto {:get maneuver rating}
+return
+
+{:set power}
+return
+{:set fuel}
+return
+
+{:set bins}
+return
+
+{:set intakes}
+return
+
+{:set scoops}
+return
+{:set qsp}
+? "current qsp: " z$; "-"; h$; g$; m$; j$ 
+?:gosub {:set mission} :?
+?:gosub {:set volume}  :?
+?:gosub {:set hull config} :?
+?:gosub {:set maneuver} :?
+?:gosub {:set jump} :?
+return
+
+{:set armor}
+return
+
+{:set hull config}
+   ? "key hull config [cbpusal]: ";
+   {:get hull config} get g$
+   if g$>="a" and g$<="c" then return
+   if g$="p" or g$="u" or g$="s" or g$="l" then return
+   goto {:get hull config}
+
+{:set volume}
+   input "input hull tons (100-2400)"; v%
+   if v% < 100 or v% > 2400 goto {:set volume}
+   vn% = v% / 100
+
+   if vn% > 14 then vn% = vn% + 1 :rem o
+   if vn% > 8  then vn% = vn% + 1 :rem i
+
+   h$ = chr$(64 + vn%)
+return
+
+{:set mission}
+   ? "key mission code [a-z]: ";
+   {:get mission code} get z$
+   if z$ < "a" or z$ > "z" goto {:get mission code}
+return
+{:set life support}
+return
+
+{:set staterooms}
+return
+
+{:set vehicles}
+return
+;
+;  Here's where we store ship-component data.
+;
+;  I'm going to try to reference it as a database.
+;  Yes, that will make it slow, but hopefully it
+;  will help keep the memory footprint low.
+;
+{:skip a section}
+read d1
+for y = 1 to d1
+   for x = 1 to 7 :read d2$ :next x
+next y
+return
+
+{:print a section}
+read d1
+for y = 1 to d1
+   read d2$ :print d2$; " - ";
+   read d2$ :print d2$
+   for x = 1 to 5 :read d2$ :next x
+next y
+return
+
+{:show weapons}
+   restore
+   gosub {:skip a section}
+   gosub {:print a section}
+return
+
+;
+;  Now throw all that important data here.
+;
+;  We'll have to build it according to a fixed schema.
+;  Since I expect to store component data here, I will follow a generalized
+;  7-field row-record structure like this:
+;
+;    code, label,    tl, mod, range/oc, tons/mult, cost/mult
+;
+;  Stage Effects
+;
+;     C     LABEL     TL   M  OC   x  CM
+data 1
+data  st,  standard,  0,  0, 100, 0, 1
+;data ult,  ultimate,  4,  4, 130, 0, 2
+;data  ad,  advanced,  3,  3, 120, 0, 1
+;data mod,  modified,  2,  2, 110, 0, 0.5
+;data  im,  improved,  1,  0, 110, 0, 1
+;data  er,  early,    -1,  0, 90,  0, 2
+;
+;  Weapons
+;
+;    C  LABEL                 TL  x R x  MCR
+data 6
+data a, particle accelerator, 11, 0,1,0, 2.5
+data g, meson gun,            13, 0,1,0, 5
+data m, missile,               8, 0,1,0, 0.2
+data j, mining laser,          8, 0,0,0, 0.5
+data k, pulse laser,           9, 0,0,0, 0.3
+data l, beam laser,           10, 0,0,0, 0.5
